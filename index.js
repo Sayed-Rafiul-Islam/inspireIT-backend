@@ -90,13 +90,12 @@ app.get('/login', (req, res) => {
     const password = req.query.password;
     const data = {email : email, date : currentDate}
 
-    const query = `SELECT * FROM users 
+    const query = `SELECT * FROM admins 
     WHERE email = '${email}'`;
     db.query(query,(err,result)=>{
         if (result.length > 0) {
             const hash = result[0].pass_word
-            const userName = result[0].userName
-            const accessLevel = result[0].accessLevel
+            const name = result[0].admin_name
             bcrypt.compare(password, hash, (err, result) => {              
                 if(!result){
                     res.status(401).send({})
@@ -104,7 +103,7 @@ app.get('/login', (req, res) => {
                     const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN,{
                         expiresIn : '1d'
                     })
-                    res.status(200).send({userName,email,accessLevel,accessToken})  
+                    res.status(200).send({name,email,accessToken})  
                 }
             }); 
         } 
@@ -114,6 +113,163 @@ app.get('/login', (req, res) => {
     })     
 })
 
+app.get('/products', (req, res) => {
+    const page = req.query.page
+    const query = `SELECT * FROM products LIMIT ?, 10`;
+    db.query(query,[page*10],(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            res.json(result)
+        }   
+    })     
+})
+app.get('/pageCount', (req, res) => {
+
+    const query = `SELECT * FROM products`;
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            const pageCount = result.length / 10
+            res.json(pageCount)
+        }   
+    })     
+})
+
+app.post('/addProduct', async (req, res) => {
+    const {product_id,product_name,configuration,source_name,unit_price,quantity} = req.body;
+    const searchQuery = `SELECT * FROM products
+	WHERE 
+	product_name = '${product_name}' AND 
+    configuration = '${configuration}' AND
+    source_name = '${source_name}' AND
+    unit_price = ${unit_price}`
+    db.query(searchQuery,(err,result)=>{
+        if (result.length > 0) {
+            const updateQuery = `UPDATE products SET quantity = quantity + 1
+            WHERE 
+            product_name = '${product_name}' AND 
+            configuration = '${configuration}' AND
+            source_name = '${source_name}' AND
+            unit_price = ${unit_price}`
+            db.query(updateQuery,(err,result)=>{
+                res.status(201).send("Product quantity Updated")
+            })
+            
+        } else {
+            const insertQuery = `INSERT INTO products (
+            product_id,
+            product_name,
+            configuration,
+            source_name,
+            unit_price,
+            quantity
+        ) 
+        VALUES ('${product_id}','${product_name}','${configuration}','${source_name}',${unit_price},${quantity})`
+        db.query(insertQuery,(err,result)=>{
+                if (err) {
+                    res.status(400).send({message : "duplicate product id"})
+                } else {
+                    res.status(200).send({message : "Product added successfully"})    
+                }     
+            })
+        }
+    })
+    // const date = new Date().toISOString().split("T")[0]
+    // const query = `INSERT INTO products (
+    //     product_id,
+    //     product_name,
+    //     configuration,
+    //     source,
+    //     unit_price,
+    //     quantity
+    // ) 
+    // VALUES ('${product_id}','${product_name}','${configuration}',${source},${unit_price},${quantity})`;
+
+    // db.query(query,(err,result)=>{
+    //             if (err) {
+    //                 console.log(err)
+    //             } else {
+    //                 res.status(200).send({message : "Product added successfully"})    
+    //             }     
+    //         })
+
+
+    // const data = {email : email, date : datetime}
+
+    // const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN,{
+    //     expiresIn : '1d'
+    // })
+    // // bcrypt.hash(password, salt, (err,hash)=> {
+    //     if(err){
+    //         console.log(err)
+    //     }
+    //     const data = [
+    //         userName,
+    //         email,
+    //         hash
+    //     ]
+        
+    //     db.query(query,data,(err,result)=>{
+    //         if (err) {
+    //             res.json({message : "User already exists with this email",accessToken : null})
+    //         } else {
+    //             res.json({message : "User created successfully",accessToken : accessToken})    
+    //         }     
+    //     })     
+    // })   
+})
+app.get('/sellPageCount', (req, res) => {
+
+    const query = `SELECT * FROM sell_records`;
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            const pageCount = result.length / 10
+            res.json(pageCount)
+        }   
+    })     
+})
+app.get('/sellRecords', (req, res) => {
+    const page = req.query.page
+    const query = `SELECT * FROM sell_records LIMIT ?, 10`;
+    const squery = `SELECT s.*, p.product_name, p.configuration, p.unit_price AS buying_price
+    FROM sell_records s
+    JOIN products p 
+        ON s.product_id = p.product_id
+        LIMIT ?, 10`;
+    db.query(squery,[page*10],(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            res.json(result)
+        }   
+    })     
+})
+// app.get('/sellRecords', (req, res) => {
+//     const page = req.query.page
+//     const id = req.query.product_id
+//     const query = `SELECT * FROM sell_records LIMIT ?, 10`;
+//     const squery = `SELECT s.*, p.product_name, p.configuration
+//     FROM sell_records s
+//     JOIN products p 
+//         ON s.product_id = p.product_id
+//         WHERE s.product_id = '${id}'`;
+//     db.query(squery,[page*10],(err,result)=>{
+//         if (err) {
+//             console.log(err)
+//         } 
+//         else  { 
+//             res.json(result)
+//         }   
+//     })     
+// })
 
 
 
