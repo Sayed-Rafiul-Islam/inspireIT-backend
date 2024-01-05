@@ -113,21 +113,39 @@ app.get('/login', (req, res) => {
     })     
 })
 
-app.get('/products', (req, res) => {
+app.get('/inventory', (req, res) => {
     const page = req.query.page
-    const query = `SELECT * FROM products LIMIT ?, 10`;
+    const query = `SELECT *
+    FROM inventory LIMIT ?, 10`;
     db.query(query,[page*10],(err,result)=>{
         if (err) {
             console.log(err)
         } 
-        else  { 
-            res.json(result)
+        else  {
+            res.status(200).send(result)
         }   
     })     
 })
-app.get('/pageCount', (req, res) => {
+app.get('/productIds', (req, res) => {
+    const {product_name,configuration,source_name,unit_price,page} = req.query
+    const query = `SELECT product_id FROM products 
+    WHERE
+    product_name = '${product_name}' AND
+    configuration = '${configuration}' AND
+    source_name = '${source_name}' AND 
+    unit_price = ${unit_price} LIMIT ${page*10}, 10`;
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            res.status(200).json(result)
+        }   
+    })     
+})
+app.get('/inventoryPageCount', (req, res) => {
 
-    const query = `SELECT * FROM products`;
+    const query = `SELECT * FROM inventory`;
     db.query(query,(err,result)=>{
         if (err) {
             console.log(err)
@@ -139,45 +157,115 @@ app.get('/pageCount', (req, res) => {
     })     
 })
 
-app.post('/addProduct', async (req, res) => {
-    const {product_id,product_name,configuration,source_name,unit_price,quantity} = req.body;
-    const searchQuery = `SELECT * FROM products
-	WHERE 
-	product_name = '${product_name}' AND 
+app.get('/inventoryItem', (req, res) => {
+
+    const id = req.query.id
+    const query = `SELECT * FROM inventory WHERE id = ${id}`;
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            res.status(200).json(result[0])
+        }   
+    })     
+})
+app.get('/productsPageCount', (req, res) => {
+
+    const {product_name,configuration,source_name,unit_price} = req.query
+    const query = `SELECT * FROM products 
+    WHERE
+    product_name = '${product_name}' AND
     configuration = '${configuration}' AND
-    source_name = '${source_name}' AND
-    unit_price = ${unit_price}`
-    db.query(searchQuery,(err,result)=>{
-        if (result.length > 0) {
-            const updateQuery = `UPDATE products SET quantity = quantity + 1
-            WHERE 
-            product_name = '${product_name}' AND 
-            configuration = '${configuration}' AND
-            source_name = '${source_name}' AND
-            unit_price = ${unit_price}`
-            db.query(updateQuery,(err,result)=>{
-                res.status(201).send("Product quantity Updated")
-            })
-            
-        } else {
+    source_name = '${source_name}' AND 
+    unit_price = ${unit_price}`;
+
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            res.status(200).json(Math.ceil(result.length/10))
+        }   
+    })    
+})
+
+app.post('/addProduct', async (req, res) => {
+    const {product_id,product_name,configuration,source_name,unit_price} = req.body;
             const insertQuery = `INSERT INTO products (
             product_id,
             product_name,
             configuration,
             source_name,
-            unit_price,
-            quantity
+            unit_price
         ) 
-        VALUES ('${product_id}','${product_name}','${configuration}','${source_name}',${unit_price},${quantity})`
+        VALUES ('${product_id}','${product_name}','${configuration}','${source_name}',${unit_price})`
         db.query(insertQuery,(err,result)=>{
                 if (err) {
+                    console.log(err)
                     res.status(400).send({message : "duplicate product id"})
                 } else {
-                    res.status(200).send({message : "Product added successfully"})    
+                    const searchQuery = `SELECT * FROM inventory
+                        WHERE 
+                            product_name = '${product_name}' AND 
+                            configuration = '${configuration}' AND
+                            source_name = '${source_name}' AND
+                            unit_price = ${unit_price}`
+                    db.query(searchQuery,(err,result)=>{
+                        if (err) {
+                            console.log(err)
+                        } 
+                        else if (result.length > 0) {
+                            const updateQuery = `UPDATE inventory SET quantity = quantity + 1
+                            WHERE 
+                            product_name = '${product_name}' AND 
+                            configuration = '${configuration}' AND
+                            source_name = '${source_name}' AND
+                            unit_price = ${unit_price}`
+                    db.query(updateQuery,(err,result)=>{
+                        res.status(201).send("Inventory Updated and product inserted")
+                            })
+                        }
+                        else {
+                            const query = `INSERT INTO inventory (
+                                product_name,
+                                configuration,
+                                source_name,
+                                unit_price,
+                                quantity
+                            ) 
+                            VALUES ('${product_name}','${configuration}','${source_name}',${unit_price}, 1)`
+                            db.query(query,(err,result)=>{
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    res.status(200).send({message : "Product added to inventory and products"})    
+                                }     
+                            })
+                        }
+
+                        
+                    })  
                 }     
             })
+      
+})
+app.get('/products', (req, res) => {
+    const {id} = req.query
+    const query = `SELECT * FROM products 
+    WHERE
+    product_id = '${id}'`;
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } else if (result.length === 0) {
+            res.status(404).send(result)
         }
-    })
+        else { 
+            res.status(200).json(result[0])
+        }   
+    })     
+})
     // const date = new Date().toISOString().split("T")[0]
     // const query = `INSERT INTO products (
     //     product_id,
@@ -221,7 +309,7 @@ app.post('/addProduct', async (req, res) => {
     //         }     
     //     })     
     // })   
-})
+
 app.get('/sellPageCount', (req, res) => {
 
     const query = `SELECT * FROM sell_records`;
