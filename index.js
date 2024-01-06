@@ -27,7 +27,6 @@ app.use(express.json());
 // JWT verification section 
 
 function verifyJWT(req, res, next) {
-    console.log("JWT")
     const accessToken = req.query.accessToken;
     if (!accessToken) {
         
