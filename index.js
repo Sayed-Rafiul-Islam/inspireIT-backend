@@ -29,7 +29,6 @@ app.use(express.json());
 function verifyJWT(req, res, next) {
     const accessToken = req.query.accessToken;
     if (!accessToken) {
-        
         return res.status(401).send();
     }
     jwt.verify(accessToken, process.env.ACCESS_TOKEN
@@ -327,14 +326,25 @@ app.get('/sellRecordsByDatePageCount',verifyJWT, (req, res) => {
         } 
         else  { 
             const pageCount = result.length / 10
-            res.staus(200).json(pageCount)
+            res.status(200).json(pageCount)
         }   
     })     
 })
 
 app.get('/sellRecordsByDate',verifyJWT, (req, res) => {
     const {page,from,to} = req.query
-    const query = `SELECT * FROM sell_records
+    if (from === '' || to === '') {
+        const query = `SELECT * FROM sell_records LIMIT ?, 10`;
+    db.query(query,[page*10],(err,result)=>{
+        if (err) {
+            console.log(err)
+        } 
+        else  { 
+            res.status(200).json(result)
+        }   
+    }) 
+    } else {
+        const query = `SELECT * FROM sell_records
     WHERE selling_date >= '${from}' AND selling_date <= '${to}'
     LIMIT ?, 10`;
     db.query(query,[page*10],(err,result)=>{
@@ -342,9 +352,10 @@ app.get('/sellRecordsByDate',verifyJWT, (req, res) => {
             console.log(err)
         } 
         else  { 
-            res.staus(200).json(result)
+            res.status(200).json(result)
         }   
-    })     
+    }) 
+    }    
 })
 app.post('/addSell',verifyJWT, async (req, res) => {
     const {product_id,product_name,configuration,unit_price,customer_name,contact_no,address,selling_price,due,source_name} = req.body;
