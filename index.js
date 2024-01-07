@@ -452,6 +452,63 @@ app.get('/monthlyRecords',verifyJWT, (req, res) => {
         }   
     })     
 })
+app.delete('/product',verifyJWT, (req, res) => {
+    const {id,product_name,configuration,source_name,unit_price} = req.query
+    const deleteQuery = `DELETE FROM products WHERE product_id = '${id}'`;
+    db.query(deleteQuery,(err,result)=>{
+        if (err) {
+            res.status(500).send("Internal server error")     
+        } 
+        else  { 
+            const updateQuery = `UPDATE inventory SET quantity = quantity - 1
+                WHERE 
+                product_name = '${product_name}' AND 
+                configuration = '${configuration}' AND
+                source_name = '${source_name}' AND
+                unit_price = ${unit_price}`
+                db.query(updateQuery,(err,result)=>{
+                    res.status(200).send("Item Removed")
+                })
+                
+        }   
+    })     
+})
+app.delete('/inventory',verifyJWT, (req, res) => {
+    const {id} = req.query
+    const deleteQuery = `DELETE FROM inventory WHERE id = '${id}'`;
+    db.query(deleteQuery,(err,result)=>{
+        if (err) {
+            res.status(500).send("Internal server error")     
+        } 
+        else  { 
+            res.status(200).send("Item Removed")   
+        }   
+    })     
+})
+app.delete('/monthlyRecord',verifyJWT, (req, res) => {
+    const {id} = req.query
+    const deleteQuery = `DELETE FROM monthly_records WHERE monthly_record_id = ${id}`;
+    db.query(deleteQuery,(err,result)=>{
+        if (err) {
+            res.status(500).send("Internal server error")     
+        } 
+        else  { 
+            res.status(200).send("Item Removed")   
+        }   
+    })     
+})
+app.delete('/sellRecords',verifyJWT, (req, res) => {
+    const {id} = req.query
+    const deleteQuery = `DELETE FROM sell_records WHERE product_id = '${id}'`;
+    db.query(deleteQuery,(err,result)=>{
+        if (err) {
+            res.status(500).send("Internal server error")     
+        } 
+        else  { 
+            res.status(200).send("Item Removed")   
+        }   
+    })     
+})
 
 // app.get('/monthlyRecordsPageCount', (req, res) => {
 //     const {from,to} = req.query
