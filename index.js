@@ -52,7 +52,7 @@ app.post('/createAdmin', async (req, res) => {
     const currentDate = new Date()
     const data = {email : email, date : currentDate}
     const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN,{
-        expiresIn : '1d'
+        expiresIn : '1h'
     })
     const query = `SELECT * FROM admins WHERE email = "${email}"`
 
@@ -104,7 +104,7 @@ app.get('/login', (req, res) => {
                     res.status(401).send({})
                 } else {
                     const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN,{
-                        expiresIn : '1d'
+                        expiresIn : '1h'
                     })
                     res.status(200).send({name,email,accessToken})  
                 }
@@ -116,7 +116,7 @@ app.get('/login', (req, res) => {
     })     
 })
 
-app.get('/inventory',verifyJWT, (req, res) => {
+app.get('/inventory', (req, res) => {
     
     const page = req.query.page
     const query = `SELECT *
@@ -130,7 +130,7 @@ app.get('/inventory',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.get('/productIds',verifyJWT, (req, res) => {
+app.get('/productIds', (req, res) => {
     const {product_name,configuration,source_name,unit_price,page} = req.query
     const query = `SELECT product_id FROM products 
     WHERE
@@ -147,7 +147,7 @@ app.get('/productIds',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.get('/inventoryPageCount',verifyJWT, (req, res) => {
+app.get('/inventoryPageCount', (req, res) => {
 
     const query = `SELECT * FROM inventory`;
     db.query(query,(err,result)=>{
@@ -161,7 +161,7 @@ app.get('/inventoryPageCount',verifyJWT, (req, res) => {
     })     
 })
 
-app.get('/inventoryItem',verifyJWT, (req, res) => {
+app.get('/inventoryItem', (req, res) => {
 
     const id = req.query.id
     const query = `SELECT * FROM inventory WHERE id = ${id}`;
@@ -174,7 +174,7 @@ app.get('/inventoryItem',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.get('/productsPageCount',verifyJWT, (req, res) => {
+app.get('/productsPageCount', (req, res) => {
 
     const {product_name,configuration,source_name,unit_price} = req.query
     const query = `SELECT * FROM products 
@@ -194,7 +194,7 @@ app.get('/productsPageCount',verifyJWT, (req, res) => {
     })    
 })
 
-app.post('/addProduct',verifyJWT, async (req, res) => {
+app.post('/addProduct', async (req, res) => {
     const {product_id,product_name,configuration,source_name,unit_price} = req.body;
             const insertQuery = `INSERT INTO products (
             product_id,
@@ -254,7 +254,7 @@ app.post('/addProduct',verifyJWT, async (req, res) => {
             })
       
 })
-app.get('/products',verifyJWT, (req, res) => {
+app.get('/products', (req, res) => {
     const {id} = req.query
     const query = `SELECT * FROM products 
     WHERE
@@ -271,7 +271,7 @@ app.get('/products',verifyJWT, (req, res) => {
     })     
 })
 
-app.get('/sellPageCount',verifyJWT, (req, res) => {
+app.get('/sellPageCount', (req, res) => {
 
     const query = `SELECT * FROM sell_records`;
     db.query(query,(err,result)=>{
@@ -284,7 +284,7 @@ app.get('/sellPageCount',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.get('/sellRecords',verifyJWT, (req, res) => {
+app.get('/sellRecords', (req, res) => {
     const {page,search} = req.query
 
     if (search === '') {
@@ -316,7 +316,7 @@ app.get('/sellRecords',verifyJWT, (req, res) => {
     }
        
 })
-app.get('/sellRecordsByDatePageCount',verifyJWT, (req, res) => {
+app.get('/sellRecordsByDatePageCount', (req, res) => {
     const {from,to} = req.query
     const query = `SELECT * FROM sell_records
     WHERE selling_date >= '${from}' AND selling_date <= '${to}'`;
@@ -331,7 +331,7 @@ app.get('/sellRecordsByDatePageCount',verifyJWT, (req, res) => {
     })     
 })
 
-app.get('/sellRecordsByDate',verifyJWT, (req, res) => {
+app.get('/sellRecordsByDate', (req, res) => {
     const {page,from,to} = req.query
     if (from === '' || to === '') {
         const query = `SELECT * FROM sell_records LIMIT ?, 10`;
@@ -357,7 +357,7 @@ app.get('/sellRecordsByDate',verifyJWT, (req, res) => {
     }) 
     }    
 })
-app.post('/addSell',verifyJWT, async (req, res) => {
+app.post('/addSell', async (req, res) => {
     const {product_id,product_name,configuration,unit_price,customer_name,contact_no,address,selling_price,due,source_name} = req.body;
     const date = new Date().toISOString().split("T")[0]
 
@@ -403,7 +403,7 @@ app.post('/addSell',verifyJWT, async (req, res) => {
             }
         })   
 })
-app.post('/addMonthly',verifyJWT, async (req, res) => {
+app.post('/addMonthly', async (req, res) => {
     const {sold,
         bought,
         due,
@@ -440,7 +440,7 @@ app.post('/addMonthly',verifyJWT, async (req, res) => {
             }
         })    
 })
-app.get('/monthlyRecords',verifyJWT, (req, res) => {
+app.get('/monthlyRecords', (req, res) => {
     const {record_date} = req.query
     const query = `SELECT * FROM monthly_records WHERE record_date = '${record_date}'`;
     db.query(query,(err,result)=>{
@@ -452,7 +452,7 @@ app.get('/monthlyRecords',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.delete('/product',verifyJWT, (req, res) => {
+app.delete('/product', (req, res) => {
     const {id,product_name,configuration,source_name,unit_price} = req.query
     const deleteQuery = `DELETE FROM products WHERE product_id = '${id}'`;
     db.query(deleteQuery,(err,result)=>{
@@ -473,7 +473,7 @@ app.delete('/product',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.delete('/inventory',verifyJWT, (req, res) => {
+app.delete('/inventory', (req, res) => {
     const {id} = req.query
     const deleteQuery = `DELETE FROM inventory WHERE id = '${id}'`;
     db.query(deleteQuery,(err,result)=>{
@@ -485,7 +485,7 @@ app.delete('/inventory',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.delete('/monthlyRecord',verifyJWT, (req, res) => {
+app.delete('/monthlyRecord', (req, res) => {
     const {id} = req.query
     const deleteQuery = `DELETE FROM monthly_records WHERE monthly_record_id = ${id}`;
     db.query(deleteQuery,(err,result)=>{
@@ -497,7 +497,7 @@ app.delete('/monthlyRecord',verifyJWT, (req, res) => {
         }   
     })     
 })
-app.delete('/sellRecords',verifyJWT, (req, res) => {
+app.delete('/sellRecords', (req, res) => {
     const {id} = req.query
     const deleteQuery = `DELETE FROM sell_records WHERE product_id = '${id}'`;
     db.query(deleteQuery,(err,result)=>{
@@ -509,230 +509,6 @@ app.delete('/sellRecords',verifyJWT, (req, res) => {
         }   
     })     
 })
-
-// app.get('/monthlyRecordsPageCount', (req, res) => {
-//     const {from,to} = req.query
-//     const query = `SELECT * FROM sell_records
-//     WHERE selling_date >= '${from}' AND selling_date <= '${to}'`;
-//     db.query(query,(err,result)=>{
-//         if (err) {
-//             console.log(err)
-//         } 
-//         else  { 
-//             const pageCount = result.length / 10
-//             res.staus(200).send(pageCount)
-//         }   
-//     })     
-// })
-
-// app.get('/sellRecords', (req, res) => {
-//     const page = req.query.page
-//     const id = req.query.product_id
-//     const query = `SELECT * FROM sell_records LIMIT ?, 10`;
-//     const squery = `SELECT s.*, p.product_name, p.configuration
-//     FROM sell_records s
-//     JOIN products p 
-//         ON s.product_id = p.product_id
-//         WHERE s.product_id = '${id}'`;
-//     db.query(squery,[page*10],(err,result)=>{
-//         if (err) {
-//             console.log(err)
-//         } 
-//         else  { 
-//             res.json(result)
-//         }   
-//     })     
-// })
-
-
-
-
-
-
-
-// app.get('/cart', verifyJWT, (req, res) => {
-//     const decoded = req.decoded.email
-//     const query = `SELECT o.productId, productName, image, o.quantity, price, o.quantity * price AS totalPrice  
-//     FROM orders o 
-//     JOIN products p 
-//         ON o.productId = p.productId
-//         WHERE email = '${decoded}'`;
-
-//     db.query(query,(err,result)=>{
-//         if (result.length > 0) {
-//             res.status(200).send(result)
-//         } else {
-//             res.status(500).send("Internal server error")            
-//         }
-      
-//     })    
-// })
-
-
-// app.post('/order', verifyJWT, (req, res) => {
-//     const {orders,date,orderId,cost} = req.body;
-//     const decoded = req.decoded.email
-//     const query = `INSERT INTO orders (
-//                      orderId,
-//                      email,
-//                      order_date,
-//                      total_price,
-//                      orders
-//                  ) 
-//                  VALUES (${orderId},'${decoded}','${date}',${cost},'${orders}')`;
-//         db.query(query,(err,result)=>{
-//                         if (err) {
-//                             res.status(500).send("Internal server error")
-//                         } else {
-//                             res.status(200).send("Successfully added")    
-//                         }     
-//                     }) 
-
-
-//     // const query = `SELECT orderId FROM orders WHERE email = '${decoded}' AND productId = ${productId}`;
-
-
-//     // db.query(query,(err,result)=>{
-//     //     if (result.length === 1) {
-//     //         const updateQuery = `UPDATE orders SET quantity = quantity + 1 AND order_date = '${order_date}' WHERE orderId = '${result[0].orderId}'`
-//     //         db.query(updateQuery,(err,result)=>{
-//     //             if (err) {
-//     //                 res.status(404).send("Not Found");
-//     //             } else {
-//     //                 res.status(200).send("Successfully Updated")
-//     //             }
-//     //         })
-            
-//     //     } else {
-//     //         const insertQuery = `INSERT INTO orders (
-//     //             orderId,
-//     //             productId,
-//     //             email,
-//     //             quantity,
-//     //             order_date
-//     //         ) 
-//     //         VALUES (${orderId},${productId},'${decoded}',${quantity},'${order_date}')`;
-            
-//     //         db.query(insertQuery,(err,result)=>{
-//     //             if (err) {
-//     //                 res.status(500).send("Internal server error")
-//     //             } else {
-//     //                 res.status(200).send("Successfully added")    
-//     //             }     
-//     //         }) 
-            
-//     //     }
-      
-//     // })    
-// })
-
-// app.get('/products', (req, res) => {
-//     const page = req.query.page
-//     const query = `SELECT * FROM products LIMIT ?, 10`;
-//     db.query(query,[page*10],(err,result)=>{
-//         if (err) {
-//             console.log(err)
-//         } 
-//         else  { 
-//             res.json(result)
-//         }   
-//     })     
-// })
-// app.get('/pageCount', (req, res) => {
-
-//     const query = `SELECT * FROM products`;
-//     db.query(query,(err,result)=>{
-//         if (err) {
-//             console.log(err)
-//         } 
-//         else  { 
-//             const pageCount = result.length / 10
-//             res.json(pageCount)
-//         }   
-//     })     
-// })
-
-
-// app.get('/users', (req, res) => {
-//     const email = req.query.email ;
-//     const currentDate = new Date()
-//     const password = req.query.password;
-
-//     const data = {email : email, date : currentDate}
-
-//     const query = `SELECT * FROM users 
-//     WHERE email = '${email}'`;
-//     db.query(query,(err,result)=>{
-//         if (result.length > 0) {
-//             const hash = result[0].pass_word
-//             bcrypt.compare(password, hash, (err, result) => {              
-//                 if(!result){
-//                     res.json({message: "Incorrect Password", result : result, accessToken : null},)
-//                 } else {
-//                     const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN,{
-//                         expiresIn : '1d'
-//                     })
-//                     res.json({message: "Successfully logged in", result : result, accessToken : accessToken})  
-//                 }
-//             }); 
-//         } 
-//         else  { 
-//             res.json({message: "No account with this email", result : false, accessToken : null})
-//         }   
-//     })     
-// })
-
-
-// app.post('/addUser', async (req, res) => {
-//     const query = `INSERT INTO users (
-//         user_name,
-//         email,
-//         pass_word
-//     ) 
-//     VALUES (?,?,?)`;
-//     const {userName,email,password} = req.body;
-//     const currentDate = new Date()
-//     const data = {email : email, date : currentDate}
-
-//     const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN,{
-//         expiresIn : '1d'
-//     })
-//     bcrypt.hash(password, salt, (err,hash)=> {
-//         if(err){
-//             console.log(err)
-//         }
-//         const data = [
-//             userName,
-//             email,
-//             hash
-//         ]
-        
-//         db.query(query,data,(err,result)=>{
-//             if (err) {
-//                 res.json({message : "User already exists with this email",accessToken : null})
-//             } else {
-//                 res.json({message : "User created successfully",accessToken : accessToken})    
-//             }     
-//         })     
-//     })   
-// })
-
-// app.delete('/product',verifyJWT, (req, res) => {
-//     const productId = req.query.productId 
-//     const decoded = req.decoded.email 
-
-//     const query = `DELETE FROM orders WHERE email = '${decoded}' AND productId = '${productId}'`;
-//     db.query(query,(err,result)=>{
-//         if (err) {
-//             res.status(500).send("Internal server error")     
-//         } 
-//         else  { 
-//             res.status(200).send("Item Removed")
-//         }   
-//     })     
-// })
-
-
 
 
 app.get('/', (req, res) => {
