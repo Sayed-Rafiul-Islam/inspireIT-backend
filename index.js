@@ -120,7 +120,7 @@ app.get('/inventory', (req, res) => {
     
     const page = req.query.page
     const query = `SELECT *
-    FROM inventory LIMIT ?, 10`;
+    FROM inventory ORDER BY import_date DESC LIMIT ?, 10`;
     db.query(query,[page*10],(err,result)=>{
         if (err) {
             console.log(err)
@@ -131,13 +131,14 @@ app.get('/inventory', (req, res) => {
     })     
 })
 app.get('/productIds', (req, res) => {
-    const {product_name,configuration,source_name,unit_price,page} = req.query
+    const {product_name,configuration,source_name,unit_price,page,import_date} = req.query
     const query = `SELECT product_id FROM products 
     WHERE
     product_name = '${product_name}' AND
     configuration = '${configuration}' AND
     source_name = '${source_name}' AND 
-    unit_price = ${unit_price} LIMIT ${page*10}, 10`;
+    unit_price = ${unit_price} AND
+    import_date = '${import_date}' LIMIT ${page*10}, 10`;
     db.query(query,(err,result)=>{
         if (err) {
             console.log(err)
@@ -195,15 +196,16 @@ app.get('/productsPageCount', (req, res) => {
 })
 
 app.post('/addProduct', async (req, res) => {
-    const {product_id,product_name,configuration,source_name,unit_price} = req.body;
+    const {product_id,product_name,configuration,source_name,unit_price,import_date} = req.body;
             const insertQuery = `INSERT INTO products (
             product_id,
             product_name,
             configuration,
             source_name,
-            unit_price
+            unit_price,
+            import_date
         ) 
-        VALUES ('${product_id}','${product_name}','${configuration}','${source_name}',${unit_price})`
+        VALUES ('${product_id}','${product_name}','${configuration}','${source_name}',${unit_price},'${import_date}')`
         db.query(insertQuery,(err,result)=>{
                 if (err) {
                     console.log(err)
@@ -214,7 +216,8 @@ app.post('/addProduct', async (req, res) => {
                             product_name = '${product_name}' AND 
                             configuration = '${configuration}' AND
                             source_name = '${source_name}' AND
-                            unit_price = ${unit_price}`
+                            unit_price = ${unit_price} AND 
+                            import_date = '${import_date}'`
                     db.query(searchQuery,(err,result)=>{
                         if (err) {
                             console.log(err)
@@ -225,7 +228,8 @@ app.post('/addProduct', async (req, res) => {
                             product_name = '${product_name}' AND 
                             configuration = '${configuration}' AND
                             source_name = '${source_name}' AND
-                            unit_price = ${unit_price}`
+                            unit_price = ${unit_price} AND 
+                            import_date = '${import_date}'`
                     db.query(updateQuery,(err,result)=>{
                         res.status(201).send("Inventory Updated and product inserted")
                             })
@@ -236,9 +240,10 @@ app.post('/addProduct', async (req, res) => {
                                 configuration,
                                 source_name,
                                 unit_price,
-                                quantity
+                                quantity,
+                                import_date
                             ) 
-                            VALUES ('${product_name}','${configuration}','${source_name}',${unit_price}, 1)`
+                            VALUES ('${product_name}','${configuration}','${source_name}',${unit_price}, 1,'${import_date}')`
                             db.query(query,(err,result)=>{
                                 if (err) {
                                     console.log(err)
@@ -288,7 +293,7 @@ app.get('/sellRecords', (req, res) => {
     const {page,search} = req.query
 
     if (search === '') {
-        const query = `SELECT * FROM sell_records LIMIT ?, 10`;
+        const query = `SELECT * FROM sell_records ORDER BY selling_date DESC LIMIT ?, 10`;
         db.query(query,[page*10],(err,result)=>{
             if (err) {
                 console.log(err)
@@ -330,11 +335,26 @@ app.get('/sellRecordsByDatePageCount', (req, res) => {
         }   
     })     
 })
+app.get('/sellRecord', (req, res) => {
+    const {id} = req.query
+
+    const query = `SELECT * FROM sell_records WHERE product_id = '${id}'`;
+    db.query(query,(err,result)=>{
+        if (err) {
+            console.log(err)
+        } else if (result.length === 0) {
+            res.status(404).send([])
+        }
+        else  { 
+            res.status(200).json(result[0])
+        }   
+    })        
+})
 
 app.get('/sellRecordsByDate', (req, res) => {
     const {page,from,to} = req.query
     if (from === '' || to === '') {
-        const query = `SELECT * FROM sell_records LIMIT ?, 10`;
+        const query = `SELECT * FROM sell_records ORDER BY selling_date DESC LIMIT ?, 10`;
     db.query(query,[page*10],(err,result)=>{
         if (err) {
             console.log(err)
@@ -346,7 +366,7 @@ app.get('/sellRecordsByDate', (req, res) => {
     } else {
         const query = `SELECT * FROM sell_records
     WHERE selling_date >= '${from}' AND selling_date <= '${to}'
-    LIMIT ?, 10`;
+    ORDER BY selling_date DESC LIMIT ?, 10`;
     db.query(query,[page*10],(err,result)=>{
         if (err) {
             console.log(err)
